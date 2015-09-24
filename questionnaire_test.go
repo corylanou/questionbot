@@ -8,7 +8,7 @@ import (
 	"github.com/corylanou/questionbot"
 )
 
-func Test_NextBack(t *testing.T) {
+func Test_Questionnaire_NextBack(t *testing.T) {
 	qs := questionBot.Questions{
 		{Text: "Question 1"},
 		{Text: "Question 2"},
@@ -54,7 +54,7 @@ func Test_NextBack(t *testing.T) {
 	}
 }
 
-func Test_QuestionnaireAnswer(t *testing.T) {
+func Test_Questionnaire_Answer(t *testing.T) {
 	q := &questionBot.Question{
 		Choices: []string{
 			"Blue",
@@ -93,51 +93,10 @@ func Test_QuestionnaireAnswer(t *testing.T) {
 		t.Fatalf("unexpected error %v", err)
 	}
 
-	if qa.Questions[0].Answered != 1 {
+	if len(qa.Questions[0].Answered) != 1 && qa.Questions[0].Answered[0] != 1 {
 		t.Fatalf("expected answer 1, got %d", qa.Questions[0].Answered)
 	}
 
-}
-
-func Test_QuestionAnswer(t *testing.T) {
-	q := questionBot.Question{
-		Choices: []string{
-			"Blue",
-			"Green",
-			"Red",
-		},
-	}
-
-	// Make sure we can accept multiple answers for multple choice questions
-	if err := q.SelectAnswer([]int{1, 2}...); err == nil {
-		t.Errorf("exp error %s, got %v", questionBot.ErrTooManyChoices, err)
-	} else if err.Error() != questionBot.ErrTooManyChoices {
-		t.Errorf("exp error %s, got %v", questionBot.ErrTooManyChoices, err)
-	}
-
-	// Check that we can't answer a multiple choice with more than one
-	q.MultipleChoice = false
-	if err := q.SelectAnswer([]int{1, 2}...); err == nil {
-		t.Errorf("exp err %s, got %v", questionBot.ErrTooManyChoices, err)
-	} else if err.Error() != questionBot.ErrTooManyChoices {
-		t.Errorf("exp err %s, got %v", questionBot.ErrTooManyChoices, err)
-	}
-
-	for i := -1; i <= len(q.Choices); i++ {
-		err := q.SelectAnswer([]int{i}...)
-		if i == -1 || i >= len(q.Choices) {
-			if err == nil {
-				t.Errorf("expected error for selecting choice %d, got %v", i, err)
-			}
-			continue
-		}
-		if err != nil {
-			t.Errorf("unexpected error for selecting choice %d, got %v", i, err)
-		}
-		if q.Answered != i {
-			t.Errorf("expected answer to be %d, got %d", i, q.Answered)
-		}
-	}
 }
 
 func Test_Questionnaire_PrefixToInt(t *testing.T) {
