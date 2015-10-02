@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/corylanou/questionbot"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func Test_Questionnaire_NextBack(t *testing.T) {
@@ -172,4 +173,49 @@ func Test_Questionnaire_PrefixToInt(t *testing.T) {
 			t.Errorf("exp: %d, got: %d", test.i, i)
 		}
 	}
+}
+
+func Test_Questionnaire_Load(t *testing.T) {
+	data := `
+[[questionnaire]]
+	title="Ad"
+	closing="Great! I'm so excited to build this with you. You should recieve an email bill and project timeline shortly. Let me know if you need anything else! I'm always here to help :)"
+	[[questionnaire.question]]
+		text="Neat! We're building an Ad. Could you tell me what the purpose of the ad is?"
+		choices = [
+			"Awareness. (I want as many new people to know about us as possible.)",
+			"Direct Action. (I want to drive traffic to a specific product or to download my mobile app.)",
+			"Lead Generation (I want to drive user or email signups)",
+			"Customer Retention (I want to build loyalty among my current customers).",
+		]
+	[[questionnaire.question]]
+		text="Is this an open question?"
+`
+	q, e := questionBot.LoadQuestionnaires(data)
+	if e != nil {
+		t.Fatal(e)
+	}
+	spew.Dump(q)
+	if len(q) != 1 {
+		t.Fatalf("wrong number of questionnaires, got %d, exp 1", len(q))
+	}
+	qa1 := q[0]
+	if got, exp := len(qa1.Questions), 2; got != exp {
+		t.Fatal("wrong number of questions, exp %d, got %d", exp, got)
+	}
+	q1, q2 := qa1.Questions[0], qa1.Questions[1]
+	if got, exp := q1.Type, questionBot.SingleChoice; exp != got {
+		t.Errorf("wrong question type.  exp %s, got %s", exp, got)
+	}
+	if exp, got := 4, len(q1.Choices); exp != got {
+		t.Errorf("wrong number of choices. exp %d, got %d", exp, got)
+	}
+
+	if got, exp := q2.Type, questionBot.OpenQuestion; exp != got {
+		t.Errorf("wrong question type.  exp %s, got %s", exp, got)
+	}
+	if exp, got := 0, len(q2.Choices); exp != got {
+		t.Errorf("wrong number of choices. exp %d, got %d", exp, got)
+	}
+
 }

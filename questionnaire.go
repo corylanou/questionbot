@@ -2,20 +2,50 @@ package questionBot
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
+
+	"github.com/BurntSushi/toml"
 )
 
-type PrefixType int
+type PrefixType string
 
 const (
-	Alpha PrefixType = iota
-	Numeric
+	Alpha   PrefixType = "alpha"
+	Numeric PrefixType = "numeric"
 )
 
+type Questionnaires []*Questionnaire
 type Questionnaire struct {
-	Questions  Questions
+	Title      string
+	Closing    string
+	Questions  Questions `toml:"question"`
 	PrefixType PrefixType
 	index      int
+}
+
+func LoadQuestionnaires(tomlData string) (Questionnaires, error) {
+	type Data struct {
+		Questionnaire Questionnaires
+	}
+	var data Data
+	if _, err := toml.Decode(tomlData, &data); err != nil {
+		return nil, err
+	}
+	var qs Questionnaires
+	for _, q := range data.Questionnaire {
+		q.Init()
+		qs = append(qs, q)
+	}
+	return qs, nil
+}
+
+func (q Questionnaires) AvailableQuestionnaires() string {
+	s := ""
+	for i, qa := range q {
+		s = s + fmt.Sprintf("%s\n", qa.Choice(i))
+	}
+	return s
 }
 
 func NewQuestionnaire(questions Questions) *Questionnaire {
@@ -23,6 +53,16 @@ func NewQuestionnaire(questions Questions) *Questionnaire {
 		index:      -1,
 		Questions:  questions,
 		PrefixType: Alpha,
+	}
+}
+
+func (q *Questionnaire) Init() {
+	q.index = -1
+	if q.PrefixType == "" {
+		q.PrefixType = Alpha
+	}
+	for _, qs := range q.Questions {
+		qs.Init()
 	}
 }
 
@@ -46,6 +86,10 @@ func (q *Questionnaire) Back() (*Question, int) {
 	return nil, -1
 }
 
+func (q *Questionnaire) AddQuestion(question Question) {
+	q.Questions = append(q.Questions, &question)
+}
+
 func (q *Questionnaire) Answer(choice string) error {
 	if q.index < 0 && q.index < len(q.Questions) {
 		return errors.New(ErrNoQuestionSelected)
@@ -60,6 +104,10 @@ func (q *Questionnaire) Answer(choice string) error {
 	}
 
 	return nil
+}
+
+func (q *Questionnaire) Choice(index int) string {
+	return fmt.Sprintf("%s. %s", q.IntToPrefix(index), q.Title)
 }
 
 func (q *Questionnaire) IntToPrefix(i int) string {

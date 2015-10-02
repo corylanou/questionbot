@@ -7,7 +7,7 @@ import (
 )
 
 func Test_Question_Answer(t *testing.T) {
-	q := questionBot.NewQuestion("", []string{"Blue", "Green", "Red"}, false, false)
+	q := questionBot.NewQuestion("", []string{"Blue", "Green", "Red"}, questionBot.SingleChoice, false)
 
 	// Make sure we can accept multiple answers for multple choice questions
 	if err := q.SelectAnswer([]int{1, 2}...); err == nil {
@@ -17,7 +17,6 @@ func Test_Question_Answer(t *testing.T) {
 	}
 
 	// Check that we can't answer a multiple choice with more than one
-	q.MultipleChoice = false
 	if err := q.SelectAnswer([]int{1, 2}...); err == nil {
 		t.Errorf("exp err %s, got %v", questionBot.ErrTooManyChoices, err)
 	} else if err.Error() != questionBot.ErrTooManyChoices {
